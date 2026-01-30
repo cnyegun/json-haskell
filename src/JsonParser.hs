@@ -1,0 +1,40 @@
+{-# LANGUAGE LambdaCase #-}
+module JsonParser 
+    ( parse
+    , char
+    , string
+    , jsTrue 
+    , jsFalse
+    , Json (..)
+
+    ) where
+
+newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
+
+char :: Char -> Parser Char
+char c = Parser $ \case 
+    [] -> Nothing
+    (car:cdr) | c == car -> Just (c, cdr)
+              | otherwise -> Nothing
+
+string :: String -> Parser String
+string "" = Parser $ \input -> Just ("", input)
+string (c:cs) = Parser $ \input -> do
+    (_, rest) <- parse (char c) input
+    (_, rest') <- parse (string cs) rest
+    pure (c:cs, rest')
+
+data Json
+    = JsTrue
+    | JsFalse
+    deriving (Show, Eq)
+
+jsTrue :: Parser Json
+jsTrue = Parser $ \input -> do
+    (_, rest) <- parse (string "true") input
+    pure (JsTrue, rest)
+
+jsFalse :: Parser Json
+jsFalse = Parser $ \input -> do
+    (_, rest) <- parse (string "false") input
+    pure (JsFalse, rest)
