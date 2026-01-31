@@ -10,6 +10,8 @@ module JsonParser
     , jsNull
     , jsValue
     , ws
+    , jsString
+    , tok
     ) where
 import Control.Applicative
 import Data.Char
@@ -17,6 +19,7 @@ import Data.Char
 data Json
     = JsBool Bool
     | JsNull
+    | JsString String
     deriving (Show, Eq)
 
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
@@ -58,16 +61,42 @@ string "" = pure ""
 string (c:cs) = (:) <$> char c <*> string cs
 
 jsTrue :: Parser Json
-jsTrue = JsBool True <$ string "true"
+jsTrue = JsBool True <$ tok (string "true")
 
 jsFalse :: Parser Json
-jsFalse = JsBool False <$ string "false"
+jsFalse = JsBool False <$ tok (string "false")
 
 jsNull :: Parser Json
-jsNull = JsNull <$ string "null"
+jsNull = JsNull <$ tok (string "null")
+
+json :: Parser Json
+json = ws *> jsValue
 
 jsValue :: Parser Json
-jsValue = jsTrue <|> jsFalse <|> jsNull
+jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString
 
 ws :: Parser String
 ws = many (satisfy isSpace)
+
+escapeMap :: Parser Char
+escapeMap = ('"'  <$ char '"')   
+        <|> ('\\' <$ char '\\')  
+        <|> ('/'  <$ char '/')   
+        <|> ('\b' <$ char 'b')   
+        <|> ('\f' <$ char 'f')   
+        <|> ('\n' <$ char 'n')   
+        <|> ('\r' <$ char 'r')   
+        <|> ('\t' <$ char 't')   
+
+escaped :: Parser Char
+escaped = char '\\' *> escapeMap
+
+stringChar :: Parser Char
+stringChar = escaped <|> normal
+    where normal = satisfy (\c -> c /= '\\' && c /= '"')
+
+jsString :: Parser Json
+jsString = JsString <$> tok (char '"' *> many stringChar <* char '"')
+
+tok :: Parser a -> Parser a
+tok p = p <* ws

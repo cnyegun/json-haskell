@@ -84,7 +84,9 @@ main = hspec $ do
 
         describe "jsonTrue" $ do
             it "parses given `true` with any suffix" $ do
-                property $ \rest -> parse jsTrue ("true" ++ rest) == Just (JsBool True, rest)
+                property $ \rest -> 
+                    let (_, rest') = span isSpace rest
+                    in parse jsTrue ("true" ++ rest') == Just (JsBool True, rest')
             
             it "always fails given otherwise" $ do
                 property $ \s -> not ("true" `isPrefixOf` s) ==> isNothing (parse jsTrue s)
@@ -100,7 +102,9 @@ main = hspec $ do
 
         describe "jsonFalse" $ do
             it "parses given `false` with any suffix" $ do
-                property $ \rest -> parse jsFalse ("false" ++ rest) == Just (JsBool False, rest)
+                property $ \rest -> 
+                    let (_, rest') = span isSpace rest
+                    in parse jsFalse ("false" ++ rest') == Just (JsBool False, rest')
             
             it "always fails given otherwise" $ do
                 property $ \s -> not ("false" `isPrefixOf` s) ==> isNothing (parse jsFalse s)
@@ -116,7 +120,9 @@ main = hspec $ do
 
         describe "jsonNull" $ do
             it "parses given `null` with any suffix" $ do
-                property $ \rest -> parse jsNull ("null" ++ rest) == Just (JsNull, rest)
+                property $ \rest -> 
+                    let (_, rest') = span isSpace rest
+                    in parse jsNull ("null" ++ rest') == Just (JsNull, rest')
             
             it "always fails given otherwise" $ do
                 property $ \input -> not ("null" `isPrefixOf` input) ==> isNothing (parse jsNull input)
@@ -144,3 +150,19 @@ main = hspec $ do
             it "parses the whitespace" $ do
                 property $ \s -> 
                     parse ws s == Just (span isSpace s)
+
+        describe "jsString" $ do
+            it "parses the empty string" $ do
+                parse jsString "\"\"" `shouldBe` Just (JsString "", "")
+
+            it "parses a 'singleton' string" $ do
+                parse jsString "\"c\"" `shouldBe` Just (JsString "c", "")
+
+            it "parses any string" $ do
+                parse jsString "\"name\"andmore" `shouldBe` Just (JsString "name", "andmore")
+        
+        describe "tok" $ do 
+            it "parses and removes the spaces" $ do
+                parse (tok (string "name")) "name  is  Luke" `shouldBe` Just ("name", "is  Luke")
+            it "parses JsString and removes the spaces" $ do
+                parse (tok jsString) "\"My name is Luke\"    } {}" `shouldBe` Just (JsString "My name is Luke", "} {}")
