@@ -12,6 +12,7 @@ module JsonParser
     , ws
     , jsString
     , tok
+    , json
     ) where
 import Control.Applicative
 import Data.Char

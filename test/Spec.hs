@@ -166,3 +166,7 @@ main = hspec $ do
                 parse (tok (string "name")) "name  is  Luke" `shouldBe` Just ("name", "is  Luke")
             it "parses JsString and removes the spaces" $ do
                 parse (tok jsString) "\"My name is Luke\"    } {}" `shouldBe` Just (JsString "My name is Luke", "} {}")
+
+        describe "json" $ do
+            it "parses with prefix spaces" $ do
+                parse json "   \"@name\"   " == Just (JsString "@name", "")
