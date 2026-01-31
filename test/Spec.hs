@@ -77,3 +77,13 @@ main = hspec $ do
 
             it "fails on empty string" $ do
                 parse jsNull "" `shouldBe` Nothing
+
+        describe "jsValue" $ do 
+            it "parses true" $ do
+                parse jsValue "true" `shouldBe` Just (JsBool True, "")
+            
+            it "parses false" $ do
+                parse jsValue "false" `shouldBe` Just (JsBool False, "")
+            
+            it "parses null" $ do
+                parse jsValue "null" `shouldBe` Just (JsNull, "")

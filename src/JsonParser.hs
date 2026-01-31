@@ -27,7 +27,7 @@ string (c:cs) = Parser $ \input -> do
 
 data Json
     = JsBool Bool
-    | JsonNull
+    | JsNull
     deriving (Show, Eq)
 
 jsTrue :: Parser Json
@@ -43,4 +43,14 @@ jsFalse = Parser $ \input -> do
 jsNull :: Parser Json
 jsNull = Parser $ \input -> do
     (_, rest) <- parse (string "null") input
-    pure (JsonNull, rest)
+    pure (JsNull, rest)
+
+jsValue :: Parser Json
+jsValue = Parser \input ->
+    case parse jsTrue text of 
+        Just v -> Just v
+        Nothing -> case parse jsFalse text of
+            Just v -> Just v
+            Nothing -> case parse jsNull text of
+                Just v -> Just v
+                Nothing -> Nothing
