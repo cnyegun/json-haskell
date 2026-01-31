@@ -12,7 +12,7 @@ module JsonParser
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 
 char :: Char -> Parser Char
-char c = Parser $ \case 
+char c = Parser $ \case
     [] -> Nothing
     (car:cdr) | c == car -> Just (c, cdr)
               | otherwise -> Nothing
@@ -24,17 +24,16 @@ string (c:cs) = Parser $ \input -> do
     (_, rest') <- parse (string cs) rest
     pure (c:cs, rest')
 
-data Json
-    = JsTrue
-    | JsFalse
+newtype Json
+    = JsBool Bool
     deriving (Show, Eq)
 
 jsTrue :: Parser Json
 jsTrue = Parser $ \input -> do
     (_, rest) <- parse (string "true") input
-    pure (JsTrue, rest)
+    pure (JsBool True, rest)
 
 jsFalse :: Parser Json
 jsFalse = Parser $ \input -> do
     (_, rest) <- parse (string "false") input
-    pure (JsFalse, rest)
+    pure (JsBool False, rest)

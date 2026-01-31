@@ -32,7 +32,7 @@ main = hspec $ do
 
         describe "JsonTrue" $ do
             it "parses given `true` with any suffix" $ do
-                property $ \rest -> parse jsTrue ("true" ++ rest) == Just (JsTrue, rest)
+                property $ \rest -> parse jsTrue ("true" ++ rest) == Just (JsBool True, rest)
             
             it "always fails given otherwise" $ do
                 property $ \s -> not ("true" `isPrefixOf` s) ==> isNothing (parse jsTrue s)
@@ -48,7 +48,7 @@ main = hspec $ do
 
         describe "JsonFalse" $ do
             it "parses given `false` with any suffix" $ do
-                property $ \rest -> parse jsFalse ("false" ++ rest) == Just (JsFalse, rest)
+                property $ \rest -> parse jsFalse ("false" ++ rest) == Just (JsBool False, rest)
             
             it "always fails given otherwise" $ do
                 property $ \s -> not ("false" `isPrefixOf` s) ==> isNothing (parse jsFalse s)
