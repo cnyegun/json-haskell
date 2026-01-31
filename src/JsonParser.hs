@@ -1,16 +1,42 @@
 {-# LANGUAGE LambdaCase #-}
-module JsonParser 
+{-# LANGUAGE InstanceSigs #-}
+module JsonParser
     ( parse
     , char
     , string
-    , jsTrue 
+    , jsTrue
     , jsFalse
     , Json (..)
     , jsNull
-
+    , jsValue
     ) where
+import Control.Applicative
 
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
+
+instance Functor Parser where
+    fmap f (Parser p) = Parser $ \text ->
+        case p text of
+            Nothing -> Nothing
+            Just (x, rest) -> Just (f x, rest)
+
+instance Applicative Parser where
+    pure :: a -> Parser a
+    pure x = Parser $ \input -> Just (x, input)
+    (<*>) :: Parser (a -> b) -> Parser a -> Parser b
+    (Parser pf) <*> (Parser pv) = Parser $ \input ->
+        case pf input of
+            Nothing -> Nothing
+            Just (f, rest) -> case pv rest of
+                Nothing -> Nothing
+                Just (val, rest') -> Just (f val, rest')
+
+instance Alternative Parser where
+    empty = Parser $ const Nothing
+    (Parser px) <|> (Parser py) = Parser $ \input ->
+        case px input of 
+            Just result -> Just result
+            Nothing -> py input
 
 char :: Char -> Parser Char
 char c = Parser $ \case
@@ -46,11 +72,4 @@ jsNull = Parser $ \input -> do
     pure (JsNull, rest)
 
 jsValue :: Parser Json
-jsValue = Parser \input ->
-    case parse jsTrue text of 
-        Just v -> Just v
-        Nothing -> case parse jsFalse text of
-            Just v -> Just v
-            Nothing -> case parse jsNull text of
-                Just v -> Just v
-                Nothing -> Nothing
+jsValue = jsTrue <|> jsFalse <|> jsNull

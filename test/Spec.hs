@@ -64,7 +64,7 @@ main = hspec $ do
 
         describe "jsonNull" $ do
             it "parses given `null` with any suffix" $ do
-                property $ \rest -> parse jsNull ("null" ++ rest) == Just (JsonNull, rest)
+                property $ \rest -> parse jsNull ("null" ++ rest) == Just (JsNull, rest)
             
             it "always fails given otherwise" $ do
                 property $ \input -> not ("null" `isPrefixOf` input) ==> isNothing (parse jsNull input)
