@@ -12,6 +12,7 @@ module JsonParser
     , ws
     ) where
 import Control.Applicative
+import Data.Char
 
 data Json
     = JsBool Bool
@@ -69,5 +70,4 @@ jsValue :: Parser Json
 jsValue = jsTrue <|> jsFalse <|> jsNull
 
 ws :: Parser Char
-ws = Parser $ \text ->
-    parse (char ' ') text
+ws = satisfy isSpace
