@@ -9,6 +9,7 @@ module JsonParser
     , Json (..)
     , jsNull
     , jsValue
+    , ws
     ) where
 import Control.Applicative
 
@@ -66,3 +67,7 @@ jsNull = JsNull <$ string "null"
 
 jsValue :: Parser Json
 jsValue = jsTrue <|> jsFalse <|> jsNull
+
+ws :: Parser Char
+ws = Parser $ \text ->
+    parse (char ' ') text

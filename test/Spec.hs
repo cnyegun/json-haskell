@@ -138,3 +138,7 @@ main = hspec $ do
             
             it "parses null" $ do
                 parse jsValue "null" `shouldBe` Just (JsNull, "")
+            
+        describe "ws" $ do
+            it "parses the whitespace" $ do
+                property $ \text -> parse ws (' ':text) == Just (' ', text)
