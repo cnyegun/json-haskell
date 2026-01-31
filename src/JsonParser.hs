@@ -30,12 +30,10 @@ instance Applicative Parser where
     pure :: a -> Parser a
     pure x = Parser $ \input -> Just (x, input)
     (<*>) :: Parser (a -> b) -> Parser a -> Parser b
-    (Parser pf) <*> (Parser pv) = Parser $ \input ->
-        case pf input of
-            Nothing -> Nothing
-            Just (f, rest) -> case pv rest of
-                Nothing -> Nothing
-                Just (val, rest') -> Just (f val, rest')
+    (Parser pf) <*> (Parser p) = Parser $ \input -> do
+        (f, rest) <- pf input
+        (v, rest') <- p rest
+        pure (f v, rest')
 
 instance Alternative Parser where
     empty = Parser $ const Nothing
