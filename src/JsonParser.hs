@@ -12,9 +12,15 @@ module JsonParser
     ) where
 import Control.Applicative
 
+data Json
+    = JsBool Bool
+    | JsNull
+    deriving (Show, Eq)
+
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 
 instance Functor Parser where
+    fmap :: (a -> b) -> Parser a -> Parser b
     fmap f (Parser p) = Parser $ \text ->
         case p text of
             Nothing -> Nothing
@@ -38,38 +44,26 @@ instance Alternative Parser where
             Just result -> Just result
             Nothing -> py input
 
+satisfy :: (Char -> Bool) -> Parser Char
+satisfy condition = Parser $ \case
+        (x:xs) | condition x -> Just (x, xs)
+        _ -> Nothing
+
 char :: Char -> Parser Char
-char c = Parser $ \case
-    (x:xs) | c == x -> Just (c, xs)
-           | otherwise -> Nothing
-    [] -> Nothing
+char c = satisfy (==c) 
 
 string :: String -> Parser String
-string "" = Parser $ \input -> Just ("", input)
-string (c:cs) = Parser $ \input -> do
-    (_, rest) <- parse (char c) input
-    (_, rest') <- parse (string cs) rest
-    pure (c:cs, rest')
-
-data Json
-    = JsBool Bool
-    | JsNull
-    deriving (Show, Eq)
+string "" = pure ""
+string (c:cs) = (:) <$> char c <*> string cs
 
 jsTrue :: Parser Json
-jsTrue = Parser $ \input -> do
-    (_, rest) <- parse (string "true") input
-    pure (JsBool True, rest)
+jsTrue = JsBool True <$ string "true"
 
 jsFalse :: Parser Json
-jsFalse = Parser $ \input -> do
-    (_, rest) <- parse (string "false") input
-    pure (JsBool False, rest)
+jsFalse = JsBool False <$ string "false"
 
 jsNull :: Parser Json
-jsNull = Parser $ \input -> do
-    (_, rest) <- parse (string "null") input
-    pure (JsNull, rest)
+jsNull = JsNull <$ string "null"
 
 jsValue :: Parser Json
 jsValue = jsTrue <|> jsFalse <|> jsNull
