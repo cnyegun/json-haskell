@@ -170,3 +170,19 @@ main = hspec $ do
         describe "json" $ do
             it "parses with prefix spaces" $ do
                 parse json "   \"@name\"   " == Just (JsString "@name", "")
+        
+        describe "jsNumber" $ do
+            it "fails when there's no number" $ do
+                property $ \input ->
+                    input /= [] && isAlpha (head input) ==> isNothing $ parse jsNumber input
+
+            it "parses non-negative number" $ do
+                property $ \(n :: Int) text ->
+                    text /= [] && isAlpha (head text) && n >= 0 ==> 
+                        parse jsNumber (show n ++ text) == Just (JsNumber n, text)
+
+            it "parses negative number" $ do
+                property $ \(n :: Int) text ->
+                    text /= [] && isAlpha (head text) && n < 0 ==> 
+                        parse jsNumber (show n ++ text) == Just (JsNumber n, text)
+            

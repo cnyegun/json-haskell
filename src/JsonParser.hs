@@ -13,6 +13,7 @@ module JsonParser
     , jsString
     , tok
     , json
+    , jsNumber
     ) where
 import Control.Applicative
 import Data.Char
@@ -21,6 +22,7 @@ data Json
     = JsBool Bool
     | JsNull
     | JsString String
+    | JsNumber Int
     deriving (Show, Eq)
 
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
@@ -49,6 +51,13 @@ instance Alternative Parser where
             Just result -> Just result
             Nothing -> py input
 
+instance Monad Parser where
+    (Parser p) >>= f = Parser $ \input -> do
+        (result, rest) <- p input
+        let Parser p2 = f result
+            in p2 rest
+
+
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy condition = Parser $ \case
         (x:xs) | condition x -> Just (x, xs)
@@ -74,7 +83,7 @@ json :: Parser Json
 json = ws *> jsValue
 
 jsValue :: Parser Json
-jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString
+jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString <|> jsNumber
 
 ws :: Parser String
 ws = many (satisfy isSpace)
@@ -101,3 +110,9 @@ jsString = JsString <$> tok (char '"' *> many stringChar <* char '"')
 
 tok :: Parser a -> Parser a
 tok p = p <* ws
+
+jsNumber :: Parser Json
+jsNumber = tok $ do 
+    s <- string "-" <|> pure ""
+    d <- some (satisfy isDigit)
+    pure $ JsNumber (read $ s ++ d)
