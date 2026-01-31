@@ -13,9 +13,9 @@ newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 
 char :: Char -> Parser Char
 char c = Parser $ \case
+    (x:xs) | c == x -> Just (c, xs)
+           | otherwise -> Nothing
     [] -> Nothing
-    (car:cdr) | c == car -> Just (c, cdr)
-              | otherwise -> Nothing
 
 string :: String -> Parser String
 string "" = Parser $ \input -> Just ("", input)
