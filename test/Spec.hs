@@ -1,7 +1,8 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
 import JsonParser 
-
+import Control.Applicative (Alternative(..))
 import Test.Hspec
 import Test.QuickCheck
 import Data.Maybe (isNothing)
@@ -10,6 +11,56 @@ import Data.List (isPrefixOf)
 main :: IO ()
 main = hspec $ do
     describe "parse" $ do
+
+        describe "fmap" $ do 
+            it "identity" $ do
+                property $ \s s' -> 
+                    parse (fmap id (string s)) s' == parse (id (string s)) s'
+
+            it "composition" $ do
+                property $ \(Fun _ f :: Fun String String) (Fun _ g :: Fun String String) s s' ->
+                    parse (fmap (f . g) (string s)) s' == parse ((fmap f . fmap g) (string s)) s'
+
+        describe "pure and <$>" $ do
+            it "identity" $ do
+                property $ \s s' -> 
+                    parse (pure id <*> string s) s' == parse (string s) s'
+
+            it "composition" $ do
+                property $ \s' -> 
+                    let 
+                        u = pure reverse
+                        v = pure (take 3)
+                        w = string "123"
+                    in parse (pure (.) <*> u <*> v <*> w) s' == parse (u <*> (v <*> w)) s'
+                    
+            it "homomorphism" $ do
+                property $ \(Fun _ f :: Fun String String) s s' ->
+                    parse ((pure f) <*> (pure s)) s' == parse (pure (f s)) s'
+
+            it "interchange" $ do
+                property $ \(someString::String) (y::String) s' -> 
+                    let u = reverse <$ string someString
+                    in parse (u <*> pure y) s' == parse (pure ($ y) <*> u) s'
+        
+        describe "<|> and empty" $ do
+            it "left identity" $ do
+                property $ \s s' ->
+                    let p = string s
+                    in parse (empty <|> p) s' == parse p s'
+
+            it "right identity" $ do
+                property $ \s s' ->
+                    let p = string s
+                    in parse (p <|> empty) s' == parse p s'
+            
+            it "associativity" $ do
+                property $ \s1 s2 s3 s' ->
+                    let a = string s1
+                        b = string s2
+                        c = string s3
+                    in parse ((a <|> b) <|> c) s' == parse (a <|> (b <|> c)) s'
+
         describe "char" $ do
             it "parsers matching characters" $ do
                 property $ \c text -> parse (char c) (c:text) == Just (c, text)

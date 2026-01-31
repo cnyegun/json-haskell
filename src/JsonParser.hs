@@ -37,6 +37,7 @@ instance Applicative Parser where
 
 instance Alternative Parser where
     empty = Parser $ const Nothing
+    (<|>) :: Parser a -> Parser a -> Parser a
     (Parser px) <|> (Parser py) = Parser $ \input ->
         case px input of 
             Just result -> Just result
