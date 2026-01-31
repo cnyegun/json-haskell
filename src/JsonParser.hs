@@ -69,5 +69,5 @@ jsNull = JsNull <$ string "null"
 jsValue :: Parser Json
 jsValue = jsTrue <|> jsFalse <|> jsNull
 
-ws :: Parser Char
-ws = satisfy isSpace
+ws :: Parser String
+ws = many (satisfy isSpace)
