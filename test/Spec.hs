@@ -142,3 +142,5 @@ main = hspec $ do
         describe "ws" $ do
             it "parses the whitespace" $ do
                 property $ \text -> parse ws (' ':text) == Just (' ', text)
+            it "fails when prefix isn't whitespace to parse" $ do
+                parse ws "afskfjkweurhi   pw  er" `shouldBe` Nothing
