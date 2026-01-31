@@ -30,7 +30,7 @@ main = hspec $ do
             it "always fails given a different string" $ do
                 property $ \s rest -> not (s `isPrefixOf` rest) ==> isNothing (parse (string s) rest)
 
-        describe "JsonTrue" $ do
+        describe "jsonTrue" $ do
             it "parses given `true` with any suffix" $ do
                 property $ \rest -> parse jsTrue ("true" ++ rest) == Just (JsBool True, rest)
             
@@ -46,7 +46,7 @@ main = hspec $ do
             it "fails on empty string" $ do
                 parse jsTrue "" `shouldBe` Nothing
 
-        describe "JsonFalse" $ do
+        describe "jsonFalse" $ do
             it "parses given `false` with any suffix" $ do
                 property $ \rest -> parse jsFalse ("false" ++ rest) == Just (JsBool False, rest)
             
@@ -61,3 +61,19 @@ main = hspec $ do
 
             it "fails on empty string" $ do
                 parse jsFalse "" `shouldBe` Nothing
+
+        describe "jsonNull" $ do
+            it "parses given `null` with any suffix" $ do
+                property $ \rest -> parse jsNull ("null" ++ rest) == Just (JsonNull, rest)
+            
+            it "always fails given otherwise" $ do
+                property $ \input -> not ("null" `isPrefixOf` input) ==> isNothing (parse jsNull input)
+            
+            it "always fails partial matches" $ do
+                parse jsNull "nul" `shouldBe` Nothing
+                parse jsNull "NULL" `shouldBe` Nothing
+                parse jsNull "Null" `shouldBe` Nothing
+                parse jsNull "nulL" `shouldBe` Nothing
+
+            it "fails on empty string" $ do
+                parse jsNull "" `shouldBe` Nothing

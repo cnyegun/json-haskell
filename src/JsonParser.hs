@@ -6,6 +6,7 @@ module JsonParser
     , jsTrue 
     , jsFalse
     , Json (..)
+    , jsNull
 
     ) where
 
@@ -24,8 +25,9 @@ string (c:cs) = Parser $ \input -> do
     (_, rest') <- parse (string cs) rest
     pure (c:cs, rest')
 
-newtype Json
+data Json
     = JsBool Bool
+    | JsonNull
     deriving (Show, Eq)
 
 jsTrue :: Parser Json
@@ -37,3 +39,8 @@ jsFalse :: Parser Json
 jsFalse = Parser $ \input -> do
     (_, rest) <- parse (string "false") input
     pure (JsBool False, rest)
+
+jsNull :: Parser Json
+jsNull = Parser $ \input -> do
+    (_, rest) <- parse (string "null") input
+    pure (JsonNull, rest)
