@@ -52,6 +52,7 @@ instance Alternative Parser where
             Nothing -> py input
 
 instance Monad Parser where
+    (>>=) :: Parser a -> (a -> Parser b) -> Parser b
     (Parser p) >>= f = Parser $ \input -> do
         (result, rest) <- p input
         let Parser p2 = f result
