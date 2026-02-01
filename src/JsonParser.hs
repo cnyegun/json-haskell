@@ -16,6 +16,9 @@ module JsonParser
     , jsNumber
     , jsArray
     , sepBy
+    , jsObject
+    , jsPair
+    , stringLiteral
     ) where
 import Control.Applicative
 import Data.Char
@@ -88,7 +91,7 @@ json :: Parser Json
 json = ws *> jsValue
 
 jsValue :: Parser Json
-jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString <|> jsNumber <|> jsArray
+jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString <|> jsNumber <|> jsArray <|> jsObject
 
 ws :: Parser String
 ws = many (satisfy isSpace)
@@ -111,7 +114,7 @@ stringChar = escaped <|> normal
     where normal = satisfy (\c -> c /= '\\' && c /= '"')
 
 jsString :: Parser Json
-jsString = JsString <$> tok (char '"' *> many stringChar <* char '"')
+jsString = JsString <$> tok stringLiteral
 
 tok :: Parser a -> Parser a
 tok p = p <* ws
@@ -149,3 +152,24 @@ sepBy elemParser sepParser = parseNonEmpty <|> parseEmpty
             pure (next:more)
             <|>
             pure []
+
+stringLiteral :: Parser String
+stringLiteral = tok $ do
+    _ <- char '\"'
+    s <- many stringChar
+    _ <- char '\"'
+    pure s
+
+jsPair :: Parser (String, Json)
+jsPair = tok $ do
+    key <- stringLiteral
+    _ <- char ':' <* ws
+    value <- json
+    pure (key, value)
+
+jsObject :: Parser Json
+jsObject = tok $ do
+    _ <- char '{' <* ws
+    kv_list <- sepBy jsPair (char ',' <* ws)
+    _ <- char '}'
+    pure (JsObject kv_list)

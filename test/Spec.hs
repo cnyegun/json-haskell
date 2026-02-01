@@ -215,3 +215,37 @@ main = hspec $ do
             it "parses nested array" $ do
                 parse jsArray "[ [1] , [2] ]" `shouldBe` Just (JsArray [JsArray [JsNumber 1], JsArray [JsNumber 2]], "")
             
+        
+        describe "jsObject" $ do
+            it "parses an empty object" $ do
+                parse jsObject "{}" `shouldBe` Just (JsObject [], "")
+                parse jsObject "{     }" `shouldBe` Just (JsObject [], "")
+            
+            it "parses a single pair" $ do
+                parse jsObject "{\"foo\":   123}" `shouldBe` Just (JsObject [("foo", JsNumber 123)], "")
+
+            it "parses many pairs" $ do
+                parse jsObject "{\"foo\": 123, \"bar\" : \"hi\"}" `shouldBe` Just (JsObject [("foo", JsNumber 123), ("bar", JsString "hi")], "")
+
+            it "parses nested JsObject as well!" $ do
+                parse jsObject "{\"foo\": { \"bar\": 123 }}" `shouldBe` Just (JsObject [("foo", JsObject [("bar", JsNumber 123)])], "")
+        
+        describe "jsPair" $ do
+            it "return empty list if nothing to parse" $ do
+                parse jsPair "" `shouldBe` Nothing
+            
+            it "parse an normal key value" $ do
+                parse jsPair "\"foo\":\"bar\"" `shouldBe` Just (("foo", JsString "bar"), "")
+                parse jsPair "\"age\":32" `shouldBe` Just (("age", JsNumber 32), "")
+                parse jsPair "\"age\"   :   32   " `shouldBe` Just (("age", JsNumber 32), "")
+
+        describe "stringLiteral" $ do
+            it "fails on empty string" $ do
+                parse stringLiteral "" `shouldBe` Nothing
+            it "parses an empty string" $ do
+                parse stringLiteral "\"\"" `shouldBe` Just ("", "")
+            it "parses a single character" $ do
+                parse stringLiteral "\"h\"" `shouldBe` Just ("h", "")
+            it "parses a normal string" $ do
+                parse stringLiteral "\"nameAgeGroup\"" `shouldBe` Just ("nameAgeGroup", "")
+            
