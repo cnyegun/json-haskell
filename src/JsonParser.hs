@@ -14,6 +14,8 @@ module JsonParser
     , tok
     , json
     , jsNumber
+    , jsArray
+    , sepBy
     ) where
 import Control.Applicative
 import Data.Char
@@ -23,6 +25,8 @@ data Json
     | JsNull
     | JsString String
     | JsNumber Int
+    | JsArray [Json]
+    | JsObject [(String, Json)]
     deriving (Show, Eq)
 
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
@@ -84,7 +88,7 @@ json :: Parser Json
 json = ws *> jsValue
 
 jsValue :: Parser Json
-jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString <|> jsNumber
+jsValue = jsTrue <|> jsFalse <|> jsNull <|> jsString <|> jsNumber <|> jsArray
 
 ws :: Parser String
 ws = many (satisfy isSpace)
@@ -117,3 +121,31 @@ jsNumber = tok $ do
     s <- string "-" <|> pure ""
     d <- some (satisfy isDigit)
     pure $ JsNumber (read $ s ++ d)
+
+jsArray :: Parser Json
+jsArray = do 
+    _ <- char '['
+    _ <- ws
+    vals <- sepBy json (char ',' <* ws)
+    _ <- char ']'
+    _ <- ws
+    pure (JsArray vals)
+
+
+sepBy :: Parser a -> Parser s -> Parser [a]
+sepBy elemParser sepParser = parseNonEmpty <|> parseEmpty
+    where 
+        parseEmpty = pure []
+
+        parseNonEmpty = do
+            first <- elemParser
+            rest <- parseRest
+            pure (first:rest)
+        
+        parseRest = do 
+            _    <- sepParser
+            next <- elemParser
+            more <- parseRest
+            pure (next:more)
+            <|>
+            pure []

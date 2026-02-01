@@ -185,4 +185,33 @@ main = hspec $ do
                 property $ \(n :: Int) text ->
                     text /= [] && isAlpha (head text) && n < 0 ==> 
                         parse jsNumber (show n ++ text) == Just (JsNumber n, text)
+        
+        describe "jsArray" $ do
+            it "fails when input is not an array" $ do
+                parse jsArray "hihih_\rdf23415" `shouldBe` Nothing
+            
+            it "parses empty array" $ do
+                parse jsArray "[]" `shouldBe` Just (JsArray [], "")
+
+            it "parses normal array" $ do
+                parse jsArray "[1,  66, \"hihi\", false   ]" `shouldBe` Just (JsArray [JsNumber 1, JsNumber 66, JsString "hihi", JsBool False], "")
+
+            it "parses nested arrays" $ do
+                parse jsArray "[1, [2, 3]]" `shouldBe` Just (JsArray [JsNumber 1, JsArray [JsNumber 2, JsNumber 3]], "")
+        
+        describe "sepBy" $ do
+            let parser = sepBy (char 'X') (char ',' <* ws)
+            it "returns an empty list if there is nothing to parse" $ do
+                parse parser "" `shouldBe` Just ([], "")
+                parse parser "SomethingThatDoesntMatch" `shouldBe` Just ([], "SomethingThatDoesntMatch")
+        
+            it "parses single element" $ do
+                parse parser "X" `shouldBe` Just ("X", "")
+
+            it "parses simple json array (inside)" $ do
+                parse parser "X,X,X,X" `shouldBe` Just ("XXXX", "")
+                parse parser "X,   X, X, Invalid" `shouldBe` Just ("XXX", ", Invalid")
+
+            it "parses nested array" $ do
+                parse jsArray "[ [1] , [2] ]" `shouldBe` Just (JsArray [JsArray [JsNumber 1], JsArray [JsNumber 2]], "")
             
