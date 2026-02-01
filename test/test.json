@@ -1,0 +1,14 @@
+{
+  "project": "Haskell Parser",
+  "is_fun": true,
+  "stats": {
+    "lines_of_code": 150,
+    "bugs": 0,
+    "nested_array": [ [1, 2], [[{"hi":[3,4, [[],[]]]}],[]], [3] ]
+  },
+  "contributors": [
+    { "name": "Chi", "id": 1 },
+    { "name": "Nguyen", "id": 2 }
+  ],
+  "nothing": null
+}
