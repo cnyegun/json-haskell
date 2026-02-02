@@ -27,7 +27,7 @@ data Json
     = JsBool Bool
     | JsNull
     | JsString String
-    | JsNumber Int
+    | JsNumber Double
     | JsArray [Json]
     | JsObject [(String, Json)]
     deriving (Show, Eq)
@@ -123,7 +123,15 @@ jsNumber :: Parser Json
 jsNumber = tok $ do 
     s <- string "-" <|> pure ""
     d <- some (satisfy isDigit)
-    pure $ JsNumber (read $ s ++ d)
+    frac <- ((:) <$> char '.' <*> some (satisfy isDigit)) <|> pure ""
+    ex <- parseExponent <|> pure ""
+    pure $ JsNumber (read $ s ++ d ++ frac ++ ex)
+  where
+    parseExponent = do
+        e <- char 'e' <|> char 'E'
+        sign <- string "+" <|> string "-" <|> pure ""
+        digits <- some (satisfy isDigit)
+        pure (e : sign ++ digits)
 
 jsArray :: Parser Json
 jsArray = do 

@@ -179,12 +179,22 @@ main = hspec $ do
             it "parses non-negative number" $ do
                 property $ \(n :: Int) text ->
                     text /= [] && isAlpha (head text) && n >= 0 ==> 
-                        parse jsNumber (show n ++ text) == Just (JsNumber n, text)
+                        parse jsNumber (show n ++ text) == Just (JsNumber (fromIntegral n), text)
 
             it "parses negative number" $ do
                 property $ \(n :: Int) text ->
                     text /= [] && isAlpha (head text) && n < 0 ==> 
-                        parse jsNumber (show n ++ text) == Just (JsNumber n, text)
+                        parse jsNumber (show n ++ text) == Just (JsNumber (fromIntegral n), text)
+
+            it "parses floating point numbers" $ do
+                parse jsNumber "3.14" `shouldBe` Just (JsNumber 3.14, "")
+                parse jsNumber "-2.5" `shouldBe` Just (JsNumber (-2.5), "")
+                parse jsNumber "0.123" `shouldBe` Just (JsNumber 0.123, "")
+
+            it "parses numbers with exponents" $ do
+                parse jsNumber "1e10" `shouldBe` Just (JsNumber 1e10, "")
+                parse jsNumber "2.5E-3" `shouldBe` Just (JsNumber 2.5e-3, "")
+                parse jsNumber "1.2e+5" `shouldBe` Just (JsNumber 1.2e5, "")
         
         describe "jsArray" $ do
             it "fails when input is not an array" $ do
@@ -194,10 +204,10 @@ main = hspec $ do
                 parse jsArray "[]" `shouldBe` Just (JsArray [], "")
 
             it "parses normal array" $ do
-                parse jsArray "[1,  66, \"hihi\", false   ]" `shouldBe` Just (JsArray [JsNumber 1, JsNumber 66, JsString "hihi", JsBool False], "")
+                parse jsArray "[1,  66, \"hihi\", false   ]" `shouldBe` Just (JsArray [JsNumber 1.0, JsNumber 66.0, JsString "hihi", JsBool False], "")
 
             it "parses nested arrays" $ do
-                parse jsArray "[1, [2, 3]]" `shouldBe` Just (JsArray [JsNumber 1, JsArray [JsNumber 2, JsNumber 3]], "")
+                parse jsArray "[1, [2, 3]]" `shouldBe` Just (JsArray [JsNumber 1.0, JsArray [JsNumber 2.0, JsNumber 3.0]], "")
         
         describe "sepBy" $ do
             let parser = sepBy (char 'X') (char ',' <* ws)
@@ -213,7 +223,7 @@ main = hspec $ do
                 parse parser "X,   X, X, Invalid" `shouldBe` Just ("XXX", ", Invalid")
 
             it "parses nested array" $ do
-                parse jsArray "[ [1] , [2] ]" `shouldBe` Just (JsArray [JsArray [JsNumber 1], JsArray [JsNumber 2]], "")
+                parse jsArray "[ [1] , [2] ]" `shouldBe` Just (JsArray [JsArray [JsNumber 1.0], JsArray [JsNumber 2.0]], "")
             
         
         describe "jsObject" $ do
@@ -222,13 +232,13 @@ main = hspec $ do
                 parse jsObject "{     }" `shouldBe` Just (JsObject [], "")
             
             it "parses a single pair" $ do
-                parse jsObject "{\"foo\":   123}" `shouldBe` Just (JsObject [("foo", JsNumber 123)], "")
+                parse jsObject "{\"foo\":   123}" `shouldBe` Just (JsObject [("foo", JsNumber 123.0)], "")
 
             it "parses many pairs" $ do
-                parse jsObject "{\"foo\": 123, \"bar\" : \"hi\"}" `shouldBe` Just (JsObject [("foo", JsNumber 123), ("bar", JsString "hi")], "")
+                parse jsObject "{\"foo\": 123, \"bar\" : \"hi\"}" `shouldBe` Just (JsObject [("foo", JsNumber 123.0), ("bar", JsString "hi")], "")
 
             it "parses nested JsObject as well!" $ do
-                parse jsObject "{\"foo\": { \"bar\": 123 }}" `shouldBe` Just (JsObject [("foo", JsObject [("bar", JsNumber 123)])], "")
+                parse jsObject "{\"foo\": { \"bar\": 123 }}" `shouldBe` Just (JsObject [("foo", JsObject [("bar", JsNumber 123.0)])], "")
         
         describe "jsPair" $ do
             it "return empty list if nothing to parse" $ do
@@ -236,8 +246,8 @@ main = hspec $ do
             
             it "parse an normal key value" $ do
                 parse jsPair "\"foo\":\"bar\"" `shouldBe` Just (("foo", JsString "bar"), "")
-                parse jsPair "\"age\":32" `shouldBe` Just (("age", JsNumber 32), "")
-                parse jsPair "\"age\"   :   32   " `shouldBe` Just (("age", JsNumber 32), "")
+                parse jsPair "\"age\":32" `shouldBe` Just (("age", JsNumber 32.0), "")
+                parse jsPair "\"age\"   :   32   " `shouldBe` Just (("age", JsNumber 32.0), "")
 
         describe "stringLiteral" $ do
             it "fails on empty string" $ do
